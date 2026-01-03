@@ -1,0 +1,160 @@
+openapi: 3.0.3
+info:
+  title: Group Messaging API
+  version: 1.0.0
+  description: API for multi-tenant group messaging SaaS platform
+servers:
+  - url: /api/v1
+paths:
+  /auth/register:
+    post:
+      summary: Register a new user (organizer) for a tenant
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tenant_name:
+                  type: string
+                email:
+                  type: string
+                password:
+                  type: string
+              required: [tenant_name, email, password]
+      responses:
+        '201':
+          description: User registered
+        '400':
+          description: Invalid input
+  /groups:
+    post:
+      summary: Create a new group
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                description:
+                  type: string
+              required: [name]
+      responses:
+        '201':
+          description: Group created
+        '400':
+          description: Invalid input
+    get:
+      summary: List all groups for tenant
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: List of groups
+  /groups/{groupId}/members:
+    post:
+      summary: Add a person to a group
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: groupId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name:
+                  type: string
+                phone_number:
+                  type: string
+              required: [name, phone_number]
+      responses:
+        '201':
+          description: Person added
+        '400':
+          description: Invalid input
+  /groups/{groupId}/messages:
+    post:
+      summary: Send a message to a group
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: groupId
+          required: true
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                message:
+                  type: string
+              required: [message]
+      responses:
+        '202':
+          description: Message accepted for delivery
+        '400':
+          description: Invalid input
+  /broadcast:
+    post:
+      summary: Broadcast a message to selected groups
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                group_ids:
+                  type: array
+                  items:
+                    type: string
+                message:
+                  type: string
+              required: [group_ids, message]
+      responses:
+        '202':
+          description: Broadcast accepted
+        '400':
+          description: Invalid input
+  /messages/{messageId}/delivery:
+    get:
+      summary: Get delivery status for a message
+      security:
+        - bearerAuth: []
+      parameters:
+        - in: path
+          name: messageId
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Delivery status
+        '404':
+          description: Message not found
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
