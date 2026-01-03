@@ -8,9 +8,9 @@ For every feature and bugfix, write the relevant test cases first (which should 
 ### Backend
 - [ ] Create Railway service for FastAPI backend using `apps/backend` as the project root
 - [ ] Create Supabase project and enable PostgreSQL and Storage for the `eventman` backend
-- [ ] Define backend environment variables and secrets required by FastAPI, Supabase, Clerk, and Twilio and document them in `config/env/backend.example.env`
-- [ ] Add GitHub Actions workflow file to build, test (pytest), and deploy the backend to Railway on pushes to the main branch
-- [ ] Configure the backend CI job in GitHub Actions to run pytest unit and integration test suites and fail the pipeline on any test failure
+- [x] Define backend environment variables and secrets required by FastAPI, Supabase, Clerk, and Twilio and document them in `config/env/backend.example.env`
+- [x] Add GitHub Actions workflow file to build, test (pytest), and deploy the backend to Railway on pushes to the main branch
+- [x] Configure the backend CI job in GitHub Actions to run pytest unit and integration test suites and fail the pipeline on any test failure
 
 ### Backend Test Cases
 - [ ] Add tests or checks that verify backend CI/CD pipeline is triggered on pull requests and main-branch pushes and that required environment variables are present

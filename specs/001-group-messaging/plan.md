@@ -1,115 +1,173 @@
 # Implementation Plan: Group Messaging
 
-**Branch**: `001-group-messaging` | **Date**: January 3, 2026 | **Spec**: [spec.md]
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
-
-**Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/commands/plan.md` for the execution workflow.
+**Branch**: `001-group-messaging` | **Date**: 2026-01-03 | **Spec**: `specs/001-group-messaging/spec.md`
+**Input**: Feature specification from `specs/001-group-messaging/spec.md`
 
 ## Summary
 
-Enable event organizers to create/manage groups and send SMS announcements to group members, with deduplication, delivery feedback, and compliance. Tech stack: Next.js (frontend), FastAPI (backend), Clerk (auth), Supabase (PostgreSQL), Twilio (SMS), Railway (deploy), GitHub Actions (CI/CD).
+Build a multi-tenant, privacy-first group messaging feature for event organizers.
+Organizers create groups (hotel attendees, locals, youths, resources, train travelers),
+add people to those groups, and send SMS announcements via Twilio. A later phase adds
+an agent that can answer attendee questions over SMS using event/group context.
 
-## Phased Delivery Plan
+The stack is a monorepo with a Next.js SPA frontend, a FastAPI backend, Clerk for
+authentication, Supabase PostgreSQL (with RLS) for storage, and Railway + GitHub
+Actions for deployment and CI/CD. Work is delivered in four phases:
 
-**Phase 1: Infrastructure & CI/CD**
-- Set up Railway projects for backend and frontend deployments
-- Configure Supabase project (PostgreSQL, Storage) and Clerk application for authentication
-- Integrate GitHub Actions for automated build, test, and deploy pipelines
-- Set up environment secrets and basic monitoring/logging
-
-**Phase 2: Authentication (Sign-In/Sign-Up)**
-- Implement user registration and login using Clerk (Next.js frontend widgets, FastAPI backend token/session validation)
-- Enforce multi-tenant boundaries and role-based access
-- Add basic user profile management
-
-**Phase 3: Group Management & SMS Announcements**
-- CRUD for groups and group membership (backend API, frontend UI)
-- Integrate Twilio for SMS sending
-- Implement announcement creation, deduplication, and delivery status feedback
-- Logging/audit for all group and announcement actions
-
-**Phase 4: Agent Integration**
-- Integrate agent engine for SMS-based Q&A
-- Route incoming SMS to agent or human responder as needed
-- Provide fallback/escalation for unanswerable questions
-- Log agent interactions for compliance and improvement
+1. Phase 1 – Infrastructure & CI/CD (this phase): repository layout, basic FastAPI
+   app and health check, backend/frontend CI workflows, environment variable
+   definitions, and Railway service wiring.
+2. Phase 2 – Authentication: Clerk-powered sign-in/sign-up, tenant context and RBAC
+   on the backend, and profile management.
+3. Phase 3 – Groups & SMS: group and member CRUD, Twilio integration, announcement
+   deduplication, delivery tracking, and dashboards.
+4. Phase 4 – Agent Integration: SMS question routing to an agent, fallbacks and
+   human escalation, and full audit logging of agent interactions.
 
 ## Technical Context
 
-**Language/Version**: Python 3.11 (backend), JavaScript/TypeScript (frontend, Next.js 14+)  
-**Primary Dependencies**: FastAPI, SQLAlchemy, Supabase Python client, Clerk SDKs (backend), Twilio Python SDK, Next.js, Clerk JS SDK, TailwindCSS, React Query  
-**Storage**: Supabase (PostgreSQL)  
-**Testing**: pytest, httpx, Playwright, Jest, React Testing Library, CI via GitHub Actions  
-**Target Platform**: Railway (cloud, Linux), Web (modern browsers)  
-**Project Type**: Web (Next.js frontend, FastAPI backend)  
-**Performance Goals**: 99% SMS delivered <2min, API p95 <300ms  
-**Constraints**: GDPR/CCPA compliance, end-to-end encryption for sensitive data, multi-tenant data isolation, opt-out support, WCAG accessibility  
-**Scale/Scope**: 10k+ users/event, 100+ concurrent organizers, 100k+ SMS/day
+**Language/Version**: 
+- Frontend: TypeScript, React, Next.js 14+ (Node.js LTS)
+- Backend: Python 3.13 with FastAPI
+
+**Primary Dependencies**: 
+- Frontend: Next.js, React, React DOM, React Query (or similar), TailwindCSS
+- Backend: FastAPI, Uvicorn, SQLAlchemy (planned), httpx, pytest, pytest-asyncio
+- Auth: Clerk (Next.js SDK and backend token validation)
+- Data: Supabase PostgreSQL with Row-Level Security
+- Messaging: Twilio SMS API/SDK
+- CI/CD: GitHub Actions, Railway CLI
+
+**Storage**: Supabase-hosted PostgreSQL with RLS for tenant isolation and audit
+logging tables. Twilio for transient message delivery state, mirrored into
+DeliveryReceipt records.
+
+**Testing**: 
+- Backend: pytest, pytest-asyncio, httpx for API integration tests
+- Frontend: Jest, React Testing Library
+- E2E: Playwright (or Cypress) for mobile-web flows
+- Tooling: coverage reports in CI, linting, basic security scans
+
+**Target Platform**: 
+- Multi-tenant SaaS deployed on Railway: FastAPI backend and Next.js frontend
+- Mobile-first web UI optimized for iOS Safari, with PWA support
+
+**Project Type**: Web monorepo with separate `apps/frontend` and `apps/backend`
+applications plus shared libraries under `libs/`.
+
+**Performance Goals**: 
+- Support at least hundreds of concurrent organizers and thousands of recipients
+  per announcement batch.
+- Typical API latency under 250ms p95 for core group and announcement operations.
+- End-to-end SMS delivery to Twilio within seconds; Twilio network latency is
+  out of scope but tracked via delivery receipts.
+
+**Constraints**: 
+- Strict tenant isolation at every layer (auth, API, DB) with RLS enforced.
+- Compliance with GDPR/CCPA and SMS regulations (opt-in/opt-out, audit logs).
+- Test-driven development is mandatory; all features require automated tests.
+- Simplicity and maintainability: avoid unnecessary indirection and over-
+  engineering; follow YAGNI.
+
+**Scale/Scope**: 
+- Initial target: up to tens of tenants and thousands of recipients per tenant.
+- Scope for this feature: group management, SMS announcements, and an optional
+  agent for Q&A, with full auditability.
 
 ## Constitution Check
 
 *GATE: Must pass before Phase 0 research. Re-check after Phase 1 design.*
 
-- All features are testable and measurable (see spec acceptance criteria)
-- Data protection: Supabase/Postgres with row-level security, Twilio for SMS (PII encrypted at rest/in transit)
-- Consent/opt-out: Required for all SMS, opt-out endpoint and UI
-- Audit trails: All group, membership, and announcement actions logged (Supabase audit table)
-- Multi-tenancy: Tenant ID enforced at all API/data layers
-- Accessibility: Next.js frontend must meet WCAG 2.1 AA
-- CI/CD: All code tested and reviewed before deploy (GitHub Actions)
+Based on `.specify/memory/constitution.md` and `constitution.md`:
 
-## Clarifications
+- **Privacy-First & Compliance** (PASS): Personal and messaging data is stored
+  in Supabase Postgres with RLS, access is always scoped by tenant, and SMS
+  flows enforce opt-in/opt-out and audit logging. All data in transit is over
+  HTTPS; at-rest encryption is provided by the platform.
+- **Modular & Testable Design** (PASS): The feature is split into clearly
+  defined backend services (auth, groups, announcements, agent) and frontend
+  modules (auth, dashboards, notifications). Each has dedicated tests and
+  documented API contracts.
+- **API-First** (PASS): All capabilities are exposed through FastAPI endpoints
+  documented via OpenAPI (`contracts/openapi.yaml`). The architecture allows
+  future CLI tooling to reuse the same APIs.
+- **TDD & Quality Gates** (PASS): Tests are required before implementation
+  (unit, integration, E2E). GitHub Actions pipelines run tests, linting,
+  and basic security checks, blocking merges on failure.
+- **Observability & Auditability** (PASS): Audit logging is a first-class
+  requirement (groups, membership, announcements, agent actions). Railway
+  logs plus structured application logs support incident analysis.
+- **Multi-Tenancy & Subscription Tiers** (PASS): Tenant IDs are enforced in
+  auth claims and DB schemas. Subscription tier fields exist on Tenant/User
+  and are enforced in middleware/services.
 
-- Q: What are we using for Next.js deployment? → A: Railway
+**Post-Design Recheck**: Current design and Phase 0/1 documents (research,
+data-model, quickstart, contracts) remain compliant. No constitution
+violations require complexity tracking at this time.
 
 ## Project Structure
 
 ### Documentation (this feature)
 
-ios/ or android/
-
 ```text
 specs/001-group-messaging/
-├── plan.md              # This file (/speckit.plan command output)
-├── research.md          # Phase 0 output (/speckit.plan command)
-├── data-model.md        # Phase 1 output (/speckit.plan command)
-├── quickstart.md        # Phase 1 output (/speckit.plan command)
-├── contracts/           # Phase 1 output (/speckit.plan command)
-└── tasks.md             # Phase 2 output (/speckit.tasks command - NOT created by /speckit.plan)
+├── spec.md          # Feature specification and clarified requirements
+├── plan.md          # This implementation plan (/speckit.plan output)
+├── research.md      # Phase 0 research and stack decisions
+├── data-model.md    # Phase 1 domain entities and relationships
+├── quickstart.md    # Phase 1 setup and usage guide
+├── contracts/       # Phase 1 API contracts (OpenAPI)
+│   └── openapi.yaml
+└── tasks.md         # Detailed engineering tasks (/speckit.tasks output)
 ```
 
 ### Source Code (repository root)
 
-
 ```text
 apps/
-├── backend/           # FastAPI app (Python)
-│   ├── src/
-│   │   ├── models/
-│   │   ├── services/
-│   │   └── api/
-│   └── tests/
-├── frontend/          # Next.js app (TypeScript)
-│   ├── src/
-│   │   ├── components/
-│   │   ├── pages/
-│   │   └── services/
-│   └── tests/
+  backend/
+    src/
+      api/
+      models/
+      services/
+      main.py
+    tests/
+      conftest.py
+      test_health.py
+
+  frontend/
+    src/
+      components/
+      pages/
+      services/
+    tests/
+
 libs/
-├── shared-types/      # Shared TypeScript types/interfaces (for API contracts, validation)
-├── utils/             # Shared utilities (e.g., validation, formatting)
+  shared-types/
+  utils/
+
 config/
-├── env/               # Environment config, secrets templates, deployment configs
-scripts/               # Dev, build, and deployment scripts (CI/CD, setup)
+  env/
+    backend.example.env
+    frontend.example.env   # planned
+
+specs/
+  001-group-messaging/
+    ... (docs as above)
+
+.github/
+  workflows/
+    backend-ci.yml
+    frontend-ci.yml        # planned
 ```
 
-**Structure Decision**: Monorepo with clear separation: `apps/frontend` (Next.js) and `apps/backend` (FastAPI), plus `libs` for shared code and `config` for environment/deployment. Enables unified CI/CD, code sharing, and clear boundaries for frontend/backend teams.
+**Structure Decision**: Use a monorepo with `apps/frontend` and `apps/backend`
+for clear separation of concerns, shared libraries under `libs/`, and
+feature-specific documentation under `specs/001-group-messaging`. This keeps
+frontend and backend deployable independently while sharing types and tooling.
 
 ## Complexity Tracking
 
-> **Fill ONLY if Constitution Check has violations that must be justified**
-
-| Violation | Why Needed | Simpler Alternative Rejected Because |
-|-----------|------------|-------------------------------------|
-| [e.g., 4th project] | [current need] | [why 3 projects insufficient] |
-| [e.g., Repository pattern] | [specific problem] | [why direct DB access insufficient] |
+No constitution violations or extra complexity beyond standard monorepo and
+frontend/backend separation have been introduced. This section remains empty
+unless future changes require explicit justification.

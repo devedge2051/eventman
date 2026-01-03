@@ -6,7 +6,7 @@ from apps.backend.src.main import app
 client = TestClient(app)
 
 
-def test_health_endpoint_returns_ok_status() -> None:
+def test_health_check_returns_ok_status() -> None:
     response = client.get("/health")
     assert response.status_code == 200
     assert response.json() == {"status": "ok"}
