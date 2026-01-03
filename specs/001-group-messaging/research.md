@@ -2,9 +2,9 @@
 # Phase 0 Research: Group Messaging Feature
 
 ## Decision: Stack and Integration
-- **Stack**: Next.js (frontend), FastAPI (backend), Supabase (auth/db), Twilio (SMS), Railway (deploy), GitHub Actions (CI/CD)
-- **Rationale**: Modern, scalable, and developer-friendly stack with strong SaaS and compliance support. Supabase provides managed Postgres and Auth, Railway simplifies deployment, Twilio is industry standard for SMS.
-- **Alternatives considered**: Firebase (less SQL flexibility), AWS Amplify (more complex), custom SMS gateway (less reliable).
+- **Stack**: Next.js (frontend), FastAPI (backend), Clerk (auth), Supabase (PostgreSQL), Twilio (SMS), Railway (deploy), GitHub Actions (CI/CD)
+- **Rationale**: Modern, scalable, and developer-friendly stack with strong SaaS and compliance support. Clerk provides hosted authentication with good Next.js integration, Supabase provides managed Postgres with RLS, Railway simplifies deployment, Twilio is industry standard for SMS.
+- **Alternatives considered**: Firebase (less SQL flexibility), AWS Amplify (more complex), Supabase Auth (less specialized auth tooling than Clerk), custom SMS gateway (less reliable).
 
 ## Decision: Phased Delivery
 - **Phases**: 1) Infra/CI, 2) Auth, 3) Groups/SMS, 4) Agent

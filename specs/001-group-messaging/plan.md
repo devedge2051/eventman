@@ -7,18 +7,18 @@
 
 ## Summary
 
-Enable event organizers to create/manage groups and send SMS announcements to group members, with deduplication, delivery feedback, and compliance. Tech stack: Next.js (frontend), FastAPI (backend), Supabase (auth/db), Twilio (SMS), Railway (deploy), GitHub Actions (CI/CD).
+Enable event organizers to create/manage groups and send SMS announcements to group members, with deduplication, delivery feedback, and compliance. Tech stack: Next.js (frontend), FastAPI (backend), Clerk (auth), Supabase (PostgreSQL), Twilio (SMS), Railway (deploy), GitHub Actions (CI/CD).
 
 ## Phased Delivery Plan
 
 **Phase 1: Infrastructure & CI/CD**
 - Set up Railway projects for backend and frontend deployments
-- Configure Supabase project (PostgreSQL, Auth, Storage)
+- Configure Supabase project (PostgreSQL, Storage) and Clerk application for authentication
 - Integrate GitHub Actions for automated build, test, and deploy pipelines
 - Set up environment secrets and basic monitoring/logging
 
 **Phase 2: Authentication (Sign-In/Sign-Up)**
-- Implement user registration and login (Supabase Auth, Next.js frontend, FastAPI backend session/token support)
+- Implement user registration and login using Clerk (Next.js frontend widgets, FastAPI backend token/session validation)
 - Enforce multi-tenant boundaries and role-based access
 - Add basic user profile management
 
@@ -37,7 +37,7 @@ Enable event organizers to create/manage groups and send SMS announcements to gr
 ## Technical Context
 
 **Language/Version**: Python 3.11 (backend), JavaScript/TypeScript (frontend, Next.js 14+)  
-**Primary Dependencies**: FastAPI, SQLAlchemy, Supabase Python client, Twilio Python SDK, Next.js, Supabase JS client, TailwindCSS, React Query  
+**Primary Dependencies**: FastAPI, SQLAlchemy, Supabase Python client, Clerk SDKs (backend), Twilio Python SDK, Next.js, Clerk JS SDK, TailwindCSS, React Query  
 **Storage**: Supabase (PostgreSQL)  
 **Testing**: pytest, httpx, Playwright, Jest, React Testing Library, CI via GitHub Actions  
 **Target Platform**: Railway (cloud, Linux), Web (modern browsers)  

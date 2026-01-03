@@ -15,7 +15,8 @@ EventMan is a multi-tenant SaaS platform for event organizers to manage attendee
 ## Architecture
 - **Frontend:** Next.js (TypeScript, React)
 - **Backend:** FastAPI (Python 3.11)
-- **Database/Auth:** Supabase (PostgreSQL, RLS, Auth)
+- **Auth:** Clerk (hosted authentication for web)
+- **Database:** Supabase (PostgreSQL with RLS)
 - **SMS:** Twilio
 - **Deployment:** Railway
 - **CI/CD:** GitHub Actions
